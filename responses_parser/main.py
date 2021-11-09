@@ -19,7 +19,7 @@ def parse_file(
         with open(f"{filepath_to}/responses/{filename}.py", "w") as file:
             text = str(Imports(**imports, **get_response_imports(schema_body)))
             text_, annotations = write_response_alias(schema_body)
-            text+= text_
+            text += text_
             return_type_annotations[filename] = annotations
             for classname, body in schema_body.items():
                 schema_object = jsonschema_object_factory(

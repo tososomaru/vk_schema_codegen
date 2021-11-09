@@ -1,5 +1,4 @@
 import logging
-
 from utils.os_utils import create_results_dir
 from utils.strings_util import (
     get_json_dict,

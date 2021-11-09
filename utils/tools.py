@@ -1,6 +1,6 @@
 import re
 
-from utils.strings_util import get_type_from_reference
+from utils.strings_util import get_type_from_reference, snake_case_to_camel_case
 
 
 def get_references(item: dict):
@@ -93,12 +93,50 @@ def get_response_imports(definitions: dict):
     return {"vkbottle_types.objects": sorted(set(imports))}
 
 
-def get_methods_imports(definitions: list):
-    imports = []
+def get_methods_imports(definitions: list, return_type_annotations: dict):
+    imports = {}
     for item in definitions:
-        base = item["name"].split(".")[0]
-        ref = item["responses"]["response"]["$ref"].split("/")[-1].split("_")[0]
-        for item in [ref, base]:
-            if item not in imports:
-                imports.append(item)
-    return {"vkbottle_types.responses": sorted(set(imports))}
+        for response in item["responses"].values():
+            if not isinstance(response, dict) and not response.get("$ref"):
+                continue
+            response_base, response_object = (
+                response["$ref"].split("/")[-1].split("_", 1)
+            )
+            response_object = snake_case_to_camel_case(response_object)
+            _import = imports.get("vkbottle_types.responses." + response_base)
+            if not _import:
+                _import = imports["vkbottle_types.responses." + response_base] = [
+                    response_object
+                ]
+            elif response_object not in _import:
+                _import.append(response_object)
+            if response_object in ("GetUploadServerResponse", "BoolResponse"):
+                additional_response = (
+                    "BaseBoolInt"
+                    if response_object == "BoolResponse"
+                    else "BaseUploadServer"
+                )
+            elif (
+                response_object not in return_type_annotations
+                or response != item["responses"]["response"]
+            ):
+                continue
+            else:
+                additional_response = return_type_annotations[response_object]
+            if "typing.List" in additional_response:
+                additional_response = (
+                    re.match(r".*\[(.*),?.*\]", additional_response)
+                    .group(1)
+                    .replace('"', "")
+                )
+            if additional_response in ("BaseBoolInt", "BaseUploadServer"):
+                if imports.get("vkbottle_types.responses.base"):
+                    imports["vkbottle_types.responses.base"].append(additional_response)
+                else:
+                    imports["vkbottle_types.responses.base"] = [additional_response]
+            elif (
+                additional_response not in ("int", "bool", "str", "list")
+                and "typing.Dict" not in additional_response
+            ):
+                _import.append(additional_response.replace('"', ""))
+    return {k: sorted(set(v)) for k, v in imports.items()}

@@ -1,5 +1,4 @@
 import logging
-from os import mkdir
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
@@ -7,7 +6,7 @@ logging.basicConfig(level=logging.INFO)
 
 def create_results_dir(dir_name: str) -> str:
     if not Path(dir_name).exists():
-        mkdir(str(Path(dir_name)))
+        Path(dir_name).mkdir(parents=True)
     return dir_name
 
 

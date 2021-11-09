@@ -1,4 +1,3 @@
-import re
 from utils.strings_util import (
     camel_case_to_snake_case,
     convert_to_python_type,
@@ -29,7 +28,6 @@ class Description(ObjectModel):
     def __str__(self):
         title = self.method.get("description") or self.method_name + " method"
         descriptions = []
-        description = ""
         for param in self.params["sorted_params"]:
             param_description = param.get("description", "").strip()
             descriptions.append(
@@ -37,8 +35,7 @@ class Description(ObjectModel):
                 + ((" " + param_description) if param_description else "")
             )
 
-        if descriptions:
-            description = "\n" + "\n".join(descriptions) + "\n\t\t"
+        description = "\n" + "\n".join(descriptions) + "\n\t\t" if descriptions else ""
         return '"""%s%s"""\n' % (title, description)
 
 
@@ -86,8 +83,8 @@ class ConvertToArgs(ObjectModel):
 
 class MethodForm:
     def parse_return_type(referense):
-        category, model = referense.split("/")[-1].split("_", 1)
-        return f"{category}.{snake_case_to_camel_case(model)}"
+        model = referense.split("/")[-1].split("_", 1)[1]
+        return f"{snake_case_to_camel_case(model)}"
 
     def costruct(**params):
         if params["additional_responses"]:
@@ -141,30 +138,16 @@ class ClassForm:
                     if k
                 )
             ] = MethodForm.parse_return_type(value["$ref"])
-        if response == "base.BoolResponse":
-            return_type = "base.BaseBoolInt"
-        elif response == "base.GetUploadServerResponse":
-            return_type = "base.BaseUploadServer"
-        elif response == "base.OkResponse":
+        if response == "BoolResponse":
+            return_type = "BaseBoolInt"
+        elif response == "GetUploadServerResponse":
+            return_type = "BaseUploadServer"
+        elif response == "OkResponse":
             return_type = "int"
         else:
-            return_type = return_type_annotations.get(response.split(".")[1], response)
-            if 'typing.List["' in return_type:
-                list_inner_type = re.match(
-                    r'typing\.List\["(.*)"\]', return_type
-                ).group(1)
-                return_type = (
-                    f"""typing.List[{response.split('.')[0]}.{list_inner_type}]"""
-                )
-            elif any(
-                default_type == return_type or "typing" in return_type
-                for default_type in ("bool", "int", "str")
-            ):
-                pass
-            elif "." not in return_type:
-                return_type = (
-                    f"""{response.split('.')[0]}.{return_type.replace('"', '')}"""
-                )
+            return_type = return_type_annotations.get(response, response).replace(
+                '"', ""
+            )
         self.constructed_methods.append(
             MethodForm.costruct(
                 name=method_name,

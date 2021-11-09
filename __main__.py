@@ -1,5 +1,3 @@
-import pytest
-
 import methods_parser.main as meth_main
 import objects_parser.main as obj_main
 import responses_parser.main as resp_main
