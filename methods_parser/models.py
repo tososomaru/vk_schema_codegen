@@ -36,7 +36,7 @@ class Description(ObjectModel):
             )
 
         description = "\n" + "\n".join(descriptions) + "\n\t\t" if descriptions else ""
-        return '"""%s%s"""\n' % (title, description)
+        return f'"""{title}\n{description}"""\n'
 
 
 class Annotation(ObjectModel):
