@@ -205,7 +205,7 @@ class MethodForm:
 
         params["model"] = (
             "\t\tmodel = self.get_model(\n"
-            "\t\t\t(" + ", ".join(responses) + "),\n"
+            "\t\t\t(" + ", ".join(responses) + ",),\n"
             f"\t\t\tdefault={params['response']},\n"
             "\t\t\tparams=params,\n"
             "\t\t)"

@@ -1,6 +1,10 @@
 import re
 
-from utils.strings_util import get_type_from_reference, snake_case_to_camel_case
+from utils.strings_util import (
+    camel_case_to_snake_case,
+    get_type_from_reference,
+    snake_case_to_camel_case,
+)
 
 
 def get_references(item: dict):
@@ -102,6 +106,7 @@ def get_methods_imports(definitions: list, return_type_annotations: dict):
             response_base, response_object = (
                 response["$ref"].split("/")[-1].split("_", 1)
             )
+            response_base = camel_case_to_snake_case(response_base)
             response_object = snake_case_to_camel_case(response_object)
             _import = imports.get("vkbottle_types.responses." + response_base)
             if not _import:
