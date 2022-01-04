@@ -273,7 +273,7 @@ class ClassForm:
 
     def __str__(self):
         return (
-            f"\n\nclass {self.name[0].upper() + self.name[1:]}Category({self.predproc}):\n"
+            f"\n\nclass {snake_case_to_camel_case(self.name)}Category({self.predproc}):\n"
             + "\n\n".join(self.constructed_methods)
             + "\n"
         )

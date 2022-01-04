@@ -1,3 +1,5 @@
+import autoflake
+import black
 from utils.titles import Imports, UpdateForwardRefs
 from utils.tools import get_response_imports
 
@@ -32,5 +34,8 @@ def parse_file(
                     text += str(item)
 
             text += str(UpdateForwardRefs(**schema_body, subclass="BaseResponse"))
-            file.write(text.replace("\t", tabulation))
+            text = text.replace("\t", tabulation)
+            text = black.format_str(text, mode=black.Mode())
+            text = autoflake.fix_code(text, remove_all_unused_imports=True)
+            file.write(text)
     return return_type_annotations
