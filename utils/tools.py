@@ -116,10 +116,7 @@ def get_methods_imports(definitions: list, return_type_annotations: dict):
                     if response_object == "BoolResponse"
                     else "BaseUploadServer"
                 )
-            elif (
-                response_object not in return_type_annotations
-                or response != item["responses"]["response"]
-            ):
+            elif response_object not in return_type_annotations:
                 continue
             else:
                 additional_response = return_type_annotations[response_object]

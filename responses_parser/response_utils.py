@@ -1,7 +1,7 @@
 import json
 
 from utils.os_utils import create_python_files, create_results_dir
-from utils.strings_util import snake_case_to_camel_case
+from utils.strings_util import camel_case_to_snake_case, snake_case_to_camel_case
 
 
 def get_responses_titles(json_schema) -> list:
@@ -9,7 +9,7 @@ def get_responses_titles(json_schema) -> list:
 
 
 def split_responses_names(json_titles: list) -> list:
-    filenames = {title.split("_")[0] for title in json_titles}
+    filenames = {camel_case_to_snake_case(title.split("_")[0]) for title in json_titles}
     return list(filenames)
 
 
@@ -25,7 +25,7 @@ def generate_response_dir(schema_path: str, destination_path: str) -> None:
 
 def put_responses_by_filename(definitions: dict, categorized: dict) -> dict:
     for key, definition in definitions.items():
-        filebound = key.split("_")[0]
+        filebound = camel_case_to_snake_case(key.split("_")[0])
         classname = snake_case_to_camel_case("_".join(key.split("_")[1:]))
         resp = {classname: definition}
         categorized[filebound].update(resp)

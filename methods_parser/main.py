@@ -1,7 +1,10 @@
 import json
 import logging
 
+import autoflake
+import black
 from utils.os_utils import create_results_dir
+from utils.strings_util import camel_case_to_snake_case
 from utils.titles import Imports
 from utils.tools import get_methods_imports
 
@@ -25,6 +28,8 @@ def parse_file(
             text = construct_schema(
                 category, methods, imports, return_type_annotations[category]
             ).replace("\t", tabulation)
+            text = black.format_str(text, mode=black.FileMode())
+            text = autoflake.fix_code(text, remove_all_unused_imports=True)
             file.write(text)
 
 
@@ -48,10 +53,10 @@ def sort_jsonmethods_schema(path: str) -> dict:
 def collecter(methods: dict) -> dict:
     result = {}
     for method in methods:
-        method_name = method["name"].split(".")
+        method_name = camel_case_to_snake_case(method["name"].split(".")[0])
 
-        if result.get(method_name[0]):
-            result[method_name[0]].append(method)
+        if result.get(method_name):
+            result[method_name].append(method)
         else:
-            result[method_name[0]] = [method]
+            result[method_name] = [method]
     return result

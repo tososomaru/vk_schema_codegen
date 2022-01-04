@@ -16,6 +16,8 @@ object_models_imports:
 object_methods_imports:
   typing:
     null
+  typing_extensions:
+    - Literal
   .base_category:
     - BaseCategory
 object_responses_imports:

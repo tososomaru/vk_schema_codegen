@@ -53,18 +53,19 @@ def get_json_dict(path: str) -> dict:
 
 @output_switch_decorator
 def snake_case_to_camel_case(string_list: list) -> dict:
-    words_list: list = []
-    for item in string_list:
-        words_list.append(
-            "".join(word[0].upper() + word[1:] for word in item.split("_"))
-        )
+    words_list: list = [
+        "".join(word[0].upper() + word[1:] for word in item.split("_"))
+        for item in string_list
+    ]
+
     return dict(zip(string_list, words_list))
 
 
+CAMEL_CASE_PATTERN = re.compile(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))")
+
+
 def camel_case_to_snake_case(string: str) -> dict:
-    return "".join(
-        "_" + symbol.lower() if symbol.isupper() else symbol for symbol in list(string)
-    ).strip("_")
+    return CAMEL_CASE_PATTERN.sub(r"_\1", string).lower()
 
 
 def convert_to_python_type(field):
