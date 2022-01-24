@@ -3,6 +3,8 @@ import logging
 
 import autoflake
 import black
+import isort
+from io import StringIO
 from utils.os_utils import create_results_dir
 from utils.strings_util import camel_case_to_snake_case
 from utils.titles import Imports
@@ -28,8 +30,11 @@ def parse_file(
             text = construct_schema(
                 category, methods, imports, return_type_annotations[category]
             ).replace("\t", tabulation)
-            text = black.format_str(text, mode=black.FileMode())
             text = autoflake.fix_code(text, remove_all_unused_imports=True)
+            output = StringIO()
+            isort.stream(StringIO(text), output, profile="black")
+            text = output.getvalue()
+            text = black.format_str(text, mode=black.FileMode())
             file.write(text)
 
 

@@ -1,3 +1,4 @@
+import typing
 from objects_parser.models.models import Annotation
 from utils.strings_util import convert_to_python_type, get_type_from_reference
 
@@ -22,7 +23,7 @@ class ResponseModelBody:
         ]
 
     def __repr__(self):
-        return "\n\t".join(f"{name} = None" for name in self.annotated_names)
+        return "\n\t".join(self.annotated_names)
 
 
 class ResponseModel:
@@ -49,7 +50,7 @@ class SingleTypeModel:
         return f"\n\n{self.name} = {self.value}\n".replace(": ", "")
 
 
-def write_response_alias(schema_body: dict) -> None:
+def write_response_alias(schema_body: dict) -> typing.Tuple[str, dict]:
     text = ""
     annotations = {}
     for classname, value in schema_body.items():

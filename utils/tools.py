@@ -108,37 +108,40 @@ def get_methods_imports(definitions: list, return_type_annotations: dict):
             )
             response_base = camel_case_to_snake_case(response_base)
             response_object = snake_case_to_camel_case(response_object)
-            _import = imports.get("vkbottle_types.responses." + response_base)
-            if not _import:
-                _import = imports["vkbottle_types.responses." + response_base] = [
-                    response_object
-                ]
-            elif response_object not in _import:
-                _import.append(response_object)
-            if response_object in ("GetUploadServerResponse", "BoolResponse"):
-                additional_response = (
-                    "BaseBoolInt"
-                    if response_object == "BoolResponse"
-                    else "BaseUploadServer"
-                )
-            elif response_object not in return_type_annotations:
-                continue
-            else:
+            additional_response = ""
+
+            if response_object == "BoolResponse":
+                additional_response = "BaseBoolInt"
+            elif (
+                response_object == "GetUploadServerResponse" and response_base == "base"
+            ):
+                response_object = "BaseGetUploadServerResponse"
+                additional_response = "BaseUploadServer"
+            elif response_object in return_type_annotations:
                 additional_response = return_type_annotations[response_object]
             if "typing.List" in additional_response:
-                additional_response = (
-                    re.match(r".*\[(.*),?.*\]", additional_response)
-                    .group(1)
-                    .replace('"', "")
-                )
-            if additional_response in ("BaseBoolInt", "BaseUploadServer"):
-                if imports.get("vkbottle_types.responses.base"):
-                    imports["vkbottle_types.responses.base"].append(additional_response)
-                else:
-                    imports["vkbottle_types.responses.base"] = [additional_response]
-            elif (
+                match = re.match(r".*\[(.*),?.*\]", additional_response)
+                if match:
+                    additional_response = match.group(1).replace('"', "")
+            if (
                 additional_response not in ("int", "bool", "str", "list")
-                and "typing.Dict" not in additional_response
+                and "typing" not in additional_response
             ):
-                _import.append(additional_response.replace('"', ""))
+                additional_response = additional_response.replace('"', "")
+            else:
+                additional_response = ""
+            _import = imports.setdefault(
+                "vkbottle_types.responses." + response_base, []
+            )
+            if response_object not in _import:
+                _import.append(response_object)
+            if not additional_response:
+                continue
+            if additional_response == "BaseBoolInt":
+                response_base = "base"
+                _import = imports.setdefault(
+                    "vkbottle_types.responses." + response_base, []
+                )
+            if all(additional_response not in _import for _import in imports.values()):
+                _import.append(additional_response)
     return {k: sorted(set(v)) for k, v in imports.items()}

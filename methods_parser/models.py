@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from utils.strings_util import (
     camel_case_to_snake_case,
     convert_to_python_type,
@@ -26,7 +28,7 @@ OVERLOAD_PATTERN = (
 
 
 class ObjectModel:
-    def __init__(self, method_name: str = None, method: dict = None, **params):
+    def __init__(self, method_name: str = "", method: dict = {}, **params):
         self.method = method
         self.method_name = method_name
         self.params = params
@@ -111,11 +113,16 @@ class ConvertToArgs(ObjectModel):
 
 
 class MethodForm:
-    def parse_return_type(referense):
-        model = referense.split("/")[-1].split("_", 1)[1]
-        return f"{snake_case_to_camel_case(model)}"
+    @staticmethod
+    def parse_return_type(referense: str):
+        response_base, response_object = referense.split("/")[-1].split("_", 1)
+        if response_base == "base" and response_object == "getUploadServer_response":
+            response_object = "BaseGetUploadServerResponse"
+        return snake_case_to_camel_case(response_object)
 
-    def costruct(**params):
+    @staticmethod
+    def costruct(**kwargs):
+        params: Dict[str, Any] = copy.deepcopy(kwargs)
         if not params["additional_responses"]:
             params["model"] = f"\t\tmodel = {params['response']}"
             return CLASSMETHOD_PATTERN.format(**params)
@@ -148,7 +155,7 @@ class MethodForm:
 
             if first_arg.get("required") and all(key in enums for key in keys):
                 responses.append(
-                    f"""(["{first_arg['name']}", "{'", "'.join(keys)}"], {response})"""
+                    f"""((["{first_arg['name']}", "{'", "'.join(keys)}"],), {response})"""
                 )
                 for k in keys:
                     first_arg["enum"].remove(k)
@@ -215,6 +222,13 @@ class MethodForm:
                 overloads += OVERLOAD_PATTERN.format(**params)
             for item in params["args"].params["sorted_params"]:
                 item["is_typed"] = False
+            if params["return_types"]:
+                params["return_type"] = (
+                    "typing.Union[\n"
+                    + ", ".join([params["return_type"], *params["return_types"]])
+                    + "]"
+                )
+
         return overloads + CLASSMETHOD_PATTERN.format(**params)
 
 
@@ -249,7 +263,7 @@ class ClassForm:
                 ] = MethodForm.parse_return_type(value["$ref"])
             if response_ == "BoolResponse":
                 return_types.append("BaseBoolInt")
-            elif response_ == "GetUploadServerResponse":
+            elif response_ == "BaseGetUploadServerResponse":
                 return_types.append("BaseUploadServer")
             elif response_ == "OkResponse":
                 return_types.append("int")

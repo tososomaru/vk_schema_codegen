@@ -1,4 +1,5 @@
 import json
+import typing
 
 from utils.os_utils import create_python_files, create_results_dir
 from utils.strings_util import camel_case_to_snake_case, snake_case_to_camel_case
@@ -13,7 +14,9 @@ def split_responses_names(json_titles: list) -> list:
     return list(filenames)
 
 
-def generate_response_dir(schema_path: str, destination_path: str) -> None:
+def generate_response_dir(
+    schema_path: str, destination_path: str
+) -> typing.Tuple[list, dict]:
     create_results_dir(destination_path)
     with open(schema_path, "r") as schema:
         json_dict = json.load(schema)

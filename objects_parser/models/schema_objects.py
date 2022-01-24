@@ -12,6 +12,8 @@ from .models import Annotation, ClassForm
 
 
 class AbstractSchemaObject(abc.ABC):
+    class_form: ClassForm
+
     @abc.abstractmethod
     def __init__(self, classname, prepared_dict):
         pass

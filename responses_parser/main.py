@@ -1,5 +1,7 @@
 import autoflake
 import black
+import isort
+from io import StringIO
 from utils.titles import Imports, UpdateForwardRefs
 from utils.tools import get_response_imports
 
@@ -9,7 +11,7 @@ from .response_utils import generate_response_dir, put_responses_by_filename
 
 def parse_file(
     schema_path: str, filepath_to: str, imports: dict, tabulation="    "
-) -> None:
+) -> dict:
     files_dir = f"{filepath_to}/responses"
     filenames, json_dict = generate_response_dir(schema_path, files_dir)
     categorized_responses = {name: {} for name in sorted(filenames)}
@@ -20,6 +22,11 @@ def parse_file(
     for filename, schema_body in responses_by_files.items():
         with open(f"{filepath_to}/responses/{filename}.py", "w") as file:
             text = str(Imports(**imports, **get_response_imports(schema_body)))
+            if filename == "base":
+                # just some hardcoded stuff
+                schema_body["BaseGetUploadServerResponse"] = schema_body.pop(
+                    "GetUploadServerResponse"
+                )
             text_, annotations = write_response_alias(schema_body)
             text += text_
             return_type_annotations[filename] = annotations
@@ -35,7 +42,10 @@ def parse_file(
 
             text += str(UpdateForwardRefs(**schema_body, subclass="BaseResponse"))
             text = text.replace("\t", tabulation)
-            text = black.format_str(text, mode=black.Mode())
             text = autoflake.fix_code(text, remove_all_unused_imports=True)
+            output = StringIO()
+            isort.stream(StringIO(text), output, profile="black")
+            text = output.getvalue()
+            text = black.format_str(text, mode=black.FileMode())
             file.write(text)
     return return_type_annotations

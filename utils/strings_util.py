@@ -1,17 +1,19 @@
 import json
 import re
 from keyword import kwlist
+from typing import Any, Union
 
 
 def get_type_from_reference(str_ref, convert_to_calmel_case=True) -> str:
     pattern = r".*/(.*)"
-    ref_type = re.search(pattern, str_ref).group(1)
+    match = re.search(pattern, str_ref)
+    ref_type = match.group(1) if match else str_ref
     if convert_to_calmel_case:
         return snake_case_to_camel_case(ref_type)
     return ref_type
 
 
-def get_annotation_type(item: dict):
+def get_annotation_type(item: dict) -> Any:
     if item.get("type") == "array":
         if item["items"].get("type"):
             type_anno = [item["items"]["type"]]
@@ -28,43 +30,19 @@ def get_annotation_type(item: dict):
     return type_anno
 
 
-def output_switch_decorator(function):
-    """If input is dict, then return dict
-    If input is a single element, return single element
-    """
-
-    def wrapper(arg):
-        keys_type = type(dict().keys())
-        if not isinstance(arg, (keys_type, list)):
-            arg = {arg: arg}
-        result = function(arg)
-        if len(arg) == 1:
-            # get first value in returned dict
-            return result[next(iter(result))]
-        return result
-
-    return wrapper
-
-
 def get_json_dict(path: str) -> dict:
     with open(path, "r") as f:
         return json.loads(f.read())
 
 
-@output_switch_decorator
-def snake_case_to_camel_case(string_list: list) -> dict:
-    words_list: list = [
-        "".join(word[0].upper() + word[1:] for word in item.split("_"))
-        for item in string_list
-    ]
-
-    return dict(zip(string_list, words_list))
+def snake_case_to_camel_case(string: str) -> str:
+    return "".join(word[0].upper() + word[1:] for word in string.split("_"))
 
 
 CAMEL_CASE_PATTERN = re.compile(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))")
 
 
-def camel_case_to_snake_case(string: str) -> dict:
+def camel_case_to_snake_case(string: str) -> str:
     return CAMEL_CASE_PATTERN.sub(r"_\1", string).lower()
 
 
@@ -85,7 +63,7 @@ def convert_to_python_type(field):
         return str(field)
 
 
-def shift_json_dict_names(plain_data: str, classnames: str) -> dict:
+def shift_json_dict_names(plain_data: dict, classnames: dict) -> dict:
     return {v: plain_data[k] for k, v in classnames.items()}
 
 
