@@ -26,7 +26,6 @@ class SchemaObject(AbstractSchemaObject):
     def __init__(self, classname, prepared_dict):
         self.class_form: ClassForm = ClassForm(classname)
         properties = prepared_dict[classname].get("properties")
-        required = prepared_dict[classname].get("required", [])
         for name in sorted(properties.keys()):
             type_anno = get_annotation_type(properties[name])
 
@@ -36,7 +35,7 @@ class SchemaObject(AbstractSchemaObject):
                 None,
                 type=properties[name].get("type"),
                 annotation=type_anno,
-                required=name in required,
+                required=properties[name].get("required"),
             )
             self.class_form.add_description_row(name, text)
 
@@ -48,7 +47,6 @@ class SchemaAllOfObject(AbstractSchemaObject):
 
         for element in prepared_dict[classname]["allOf"]:
             properties = element.get("properties")
-            required = prepared_dict[classname].get("required", [])
             reference = element.get("$ref")
 
             if properties:
@@ -61,7 +59,7 @@ class SchemaAllOfObject(AbstractSchemaObject):
                         None,
                         type=properties[name].get("type"),
                         annotation=type_anno,
-                        required=name in required,
+                        required=properties[name].get("required"),
                     )
                     self.class_form.add_description_row(name, text)
             if reference:
