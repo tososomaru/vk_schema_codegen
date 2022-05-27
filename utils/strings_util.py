@@ -1,13 +1,13 @@
 import json
 import re
 from keyword import kwlist
-from typing import Any, Union
+from typing import Any
 
 
 def get_type_from_reference(str_ref, convert_to_calmel_case=True) -> str:
     pattern = r".*/(.*)"
     match = re.search(pattern, str_ref)
-    ref_type = match.group(1) if match else str_ref
+    ref_type = match[1] if match else str_ref
     if convert_to_calmel_case:
         return snake_case_to_camel_case(ref_type)
     return ref_type
@@ -78,5 +78,5 @@ def categorize_methods_as_files(json_dict: dict) -> dict:
 
 def resolve_property_name(name: str):
     if name[0].isdigit() or name in kwlist:
-        name = "_" + name
+        name = f"_{name}"
     return name

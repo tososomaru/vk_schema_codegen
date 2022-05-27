@@ -1,4 +1,5 @@
 import typing
+
 from objects_parser.models.models import Annotation
 from utils.strings_util import convert_to_python_type, get_type_from_reference
 

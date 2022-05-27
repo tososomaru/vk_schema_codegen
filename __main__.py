@@ -3,7 +3,6 @@ import objects_parser.main as obj_main
 import responses_parser.main as resp_main
 from config import yaml_processing
 
-
 CONFIG = yaml_processing.get_config("config/config.yaml")
 objects_path: str = CONFIG["schema_objects_path"]
 methods_path: str = CONFIG["schema_methods_path"]

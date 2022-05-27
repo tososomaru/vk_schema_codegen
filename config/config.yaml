@@ -11,19 +11,19 @@ object_models_imports:
     null
   typing:
     null
-  pydantic:
+  vkbottle_types.base_model:
     - BaseModel
 object_methods_imports:
   typing:
     null
   typing_extensions:
     - Literal
-  .base_category:
+  vkbottle_types.methods.base_category:
     - BaseCategory
 object_responses_imports:
   inspect:
     null
   typing:
     null
-  .base_response:
+  vkbottle_types.responses.base_response:
     - BaseResponse

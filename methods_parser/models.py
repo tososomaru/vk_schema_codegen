@@ -1,3 +1,4 @@
+import copy
 from typing import Any, Dict
 
 from utils.strings_util import (
@@ -6,7 +7,6 @@ from utils.strings_util import (
     resolve_property_name,
     snake_case_to_camel_case,
 )
-import copy
 
 CLASSMETHOD_PATTERN = (
     "\tasync def {snake_name}(\n"
@@ -28,7 +28,7 @@ OVERLOAD_PATTERN = (
 
 
 class ObjectModel:
-    def __init__(self, method_name: str = "", method: dict = {}, **params):
+    def __init__(self, method_name: str = "", method: dict = None, **params):
         self.method = method
         self.method_name = method_name
         self.params = params
@@ -36,13 +36,15 @@ class ObjectModel:
 
 class Description(ObjectModel):
     def __str__(self):
-        title = self.method.get("description") or self.method_name + " method"
+        title = self.method.get("description") or f"{self.method_name} method"
         descriptions = []
         for param in self.params["sorted_params"]:
             param_description = param.get("description", "").strip()
             descriptions.append(
-                f'\t\t:param {param["name"]}:'
-                + ((" " + param_description) if param_description else "")
+                (
+                    f'\t\t:param {param["name"]}:'
+                    + (f" {param_description}" if param_description else "")
+                )
             )
 
         description = (
@@ -55,7 +57,11 @@ class Annotation(ObjectModel):
     def __str__(self):
         items = self.params["items"]
         required = self.params["type"]
-        param_annotate = convert_to_python_type(self.params["annotate"])
+        if isinstance(self.params["annotate"], list):
+            items["type"] = self.params["type"] = self.params["annotate"]
+            self.params["annotate"] = param_annotate = "list"
+        else:
+            param_annotate = convert_to_python_type(self.params["annotate"])
         overload = self.params["overload"]
         oveload_value = self.params["overload_value"]
         is_typed = self.params["is_typed"]
@@ -64,25 +70,22 @@ class Annotation(ObjectModel):
             return "=None"
 
         if oveload_value:
-            return f"{oveload_value}" + (" = ..." if not required else "")
-        elif param_annotate == "list" and items.get("$ref", items.get("type")):
+            return f"{oveload_value}" + ("" if required else " = ...")
+        elif param_annotate == "list":
             if items.get("$ref"):
                 post_annotate = "str"  # it's enum
+            elif isinstance(items["type"], list):
+                post_annotate = [convert_to_python_type(item) for item in items["type"]]
+                post_annotate = "typing.Union[" + ", ".join(post_annotate) + "]"
             else:
                 post_annotate = convert_to_python_type(items["type"])
-            param_annotate = "typing.List[%s]" % convert_to_python_type(post_annotate)
+            param_annotate = f"typing.List[{post_annotate}]"
         elif self.params.get("enum"):
             if isinstance(self.params["enum"][0], str):
                 self.params["enum"] = [item.lower() for item in self.params["enum"]]
-            return f"Literal{str(self.params['enum'])}" + (
-                " = None"
-                if not required and not overload
-                else " = ..."
-                if overload and not required
-                else ""
-            )
+            param_annotate = f'Literal{self.params["enum"]}'
         if overload:
-            return f"{param_annotate}" + (" = ..." if not required else "")
+            return f"{param_annotate}" + ("" if required else " = ...")
         if required is False:
             return f"typing.Optional[{param_annotate}] = None"
         return param_annotate
@@ -91,23 +94,22 @@ class Annotation(ObjectModel):
 class ConvertToArgs(ObjectModel):
     def __str__(self):
         params = ["self"]
-        for param in self.params["sorted_params"]:
-            params.append(
-                f"{param['name']}"
-                + (": " if param.get("is_typed", True) else "")
-                + str(
-                    Annotation(
-                        annotate=param["type"],
-                        type=param.get("required", False),
-                        items=param.get("items", {}),
-                        overload=param.get("overload", False),
-                        overload_value=param.get("overload_value"),
-                        enum=param.get("enum", []),
-                        is_typed=param.get("is_typed", True),
-                    )
+        params.extend(
+            f"{param['name']}"
+            + (": " if param.get("is_typed", True) else "")
+            + str(
+                Annotation(
+                    annotate=param["type"],
+                    type=param.get("required", False),
+                    items=param.get("items", {}),
+                    overload=param.get("overload", False),
+                    overload_value=param.get("overload_value"),
+                    enum=param.get("enum", []),
+                    is_typed=param.get("is_typed", True),
                 )
             )
-
+            for param in self.params["sorted_params"]
+        )
         params.append("**kwargs")
         return ", ".join(params)
 
@@ -121,7 +123,7 @@ class MethodForm:
         return snake_case_to_camel_case(response_object)
 
     @staticmethod
-    def costruct(**kwargs):
+    def costruct(**kwargs):  # sourcery skip: low-code-quality
         params: Dict[str, Any] = copy.deepcopy(kwargs)
         if not params["additional_responses"]:
             params["model"] = f"\t\tmodel = {params['response']}"
@@ -269,7 +271,7 @@ class ClassForm:
                 return_types.append("int")
             else:
                 return_types.append(
-                    return_type_annotations.get(response_, response_).replace('"', "")
+                    return_type_annotations.get(response_, f"{response_}Model").replace('"', "")
                 )
         return_type = return_types.pop(0)
         self.constructed_methods.append(

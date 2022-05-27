@@ -1,13 +1,13 @@
 import json
 import logging
+from io import StringIO
 
 import autoflake
 import black
 import isort
-from io import StringIO
 from utils.os_utils import create_results_dir
-from utils.strings_util import camel_case_to_snake_case
-from utils.titles import Imports
+from utils.strings_util import camel_case_to_snake_case, snake_case_to_camel_case
+from utils.titles import ExportAll, Imports
 from utils.tools import get_methods_imports
 
 from .models import ClassForm
@@ -26,15 +26,16 @@ def parse_file(
     categories = sort_jsonmethods_schema(filepath)
 
     for category, methods in categories.items():
+        text = construct_schema(
+            category, methods, imports, return_type_annotations[category]
+        ).replace("\t", tabulation)
+        text += str(ExportAll(f"{snake_case_to_camel_case(category)}Category"))
+        text = autoflake.fix_code(text, remove_all_unused_imports=True)
+        output = StringIO()
+        isort.stream(StringIO(text), output, profile="black")
+        text = output.getvalue()
+        text = black.format_str(text, mode=black.FileMode())
         with open(f"{base_dir}/{category}.py", "w") as file:
-            text = construct_schema(
-                category, methods, imports, return_type_annotations[category]
-            ).replace("\t", tabulation)
-            text = autoflake.fix_code(text, remove_all_unused_imports=True)
-            output = StringIO()
-            isort.stream(StringIO(text), output, profile="black")
-            text = output.getvalue()
-            text = black.format_str(text, mode=black.FileMode())
             file.write(text)
 
 

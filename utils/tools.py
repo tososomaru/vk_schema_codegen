@@ -53,7 +53,7 @@ def create_objects_from_enum_types(definitions: dict):
             item_type = item_value.get("type")
             item_enum = item_value.get("enum")
             item_description = item_value.get("description")
-            enum_name = key + "_" + item_name
+            enum_name = f"{key}_{item_name}"
             if not (item_type and item_enum):
                 continue
             if item_description:
@@ -108,7 +108,6 @@ def get_methods_imports(definitions: list, return_type_annotations: dict):
             )
             response_base = camel_case_to_snake_case(response_base)
             response_object = snake_case_to_camel_case(response_object)
-            additional_response = ""
 
             if response_object == "BoolResponse":
                 additional_response = "BaseBoolInt"
@@ -117,8 +116,8 @@ def get_methods_imports(definitions: list, return_type_annotations: dict):
             ):
                 response_object = "BaseGetUploadServerResponse"
                 additional_response = "BaseUploadServer"
-            elif response_object in return_type_annotations:
-                additional_response = return_type_annotations[response_object]
+            else:
+                additional_response = return_type_annotations.get(response_object, f"{response_object}Model")
             if "typing.List" in additional_response:
                 match = re.match(r".*\[(.*),?.*\]", additional_response)
                 if match:
@@ -130,18 +129,14 @@ def get_methods_imports(definitions: list, return_type_annotations: dict):
                 additional_response = additional_response.replace('"', "")
             else:
                 additional_response = ""
-            _import = imports.setdefault(
-                "vkbottle_types.responses." + response_base, []
-            )
+            _import = imports.setdefault(f"vkbottle_types.responses.{response_base}", [])
             if response_object not in _import:
                 _import.append(response_object)
             if not additional_response:
                 continue
             if additional_response == "BaseBoolInt":
                 response_base = "base"
-                _import = imports.setdefault(
-                    "vkbottle_types.responses." + response_base, []
-                )
+                _import = imports.setdefault(f"vkbottle_types.responses.{response_base}", [])
             if all(additional_response not in _import for _import in imports.values()):
                 _import.append(additional_response)
     return {k: sorted(set(v)) for k, v in imports.items()}

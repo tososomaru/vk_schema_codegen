@@ -36,3 +36,16 @@ class UpdateForwardRefs(AbstractTitle):
             )
             + "\n"
         )
+
+
+class ExportAll(AbstractTitle):
+    def __init__(self, *objects):
+        self.objects = objects
+
+    def __repr__(self):
+        return (
+            "\n\n"
+            + ("__all__ = (\n\t")
+            + ",\n\t".join(f'"{_}"' for _ in self.objects)
+            + ",\n)\n"
+        )

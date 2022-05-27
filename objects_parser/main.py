@@ -1,11 +1,14 @@
 import logging
+from io import StringIO
+
+import isort
 from utils.os_utils import create_results_dir
 from utils.strings_util import (
     get_json_dict,
     shift_json_dict_names,
     snake_case_to_camel_case,
 )
-from utils.titles import Imports, UpdateForwardRefs
+from utils.titles import ExportAll, Imports, UpdateForwardRefs
 from utils.tools import create_objects_from_enum_types, sort_by_reference
 
 from .models.schema_objects import schema_object_fabric_method
@@ -17,16 +20,19 @@ def write_translated_json(
     filepath_to: str, prepared_dict: dict, imports: dict, tabulation="    "
 ) -> None:
     create_results_dir(filepath_to)
+    text = str(Imports(**imports))
+
+    for classname in prepared_dict:
+        class_form = schema_object_fabric_method(classname, prepared_dict)
+        text += str(class_form)
+    text += str(UpdateForwardRefs(**prepared_dict))
+    text += str(ExportAll(*prepared_dict))
+    text = text.replace("\t", tabulation)
+    output = StringIO()
+    isort.stream(StringIO(text), output, profile="black")
+    text = output.getvalue()
 
     with open(f"{filepath_to}/objects.py", "w") as file:
-        text = str(Imports(**imports))
-
-        for classname in prepared_dict:
-            class_form = schema_object_fabric_method(classname, prepared_dict)
-            text += str(class_form)
-
-        text += str(UpdateForwardRefs(**prepared_dict))
-        text = text.replace("\t", tabulation)
         file.write(text)
 
 

@@ -90,7 +90,7 @@ class SchemaOneOfObject(AbstractSchemaObject):
                 self.class_form.set_super_class(formatted)
         else:
             types = ", ".join(convert_to_python_type(item["type"]) for item in one_of)
-            self.class_form = f"\n\n{classname} = typing.Union[{types}]\n"
+            self.class_form = f"\n\n{classname} = typing.Union[{types}]\n"  # type: ignore
 
 
 class SchemaEnum(AbstractSchemaObject):
@@ -136,7 +136,7 @@ class SchemaReference(AbstractSchemaObject):
         if prepared_dict[predecessor].get("type") == "object":
             self.class_form: ClassForm = ClassForm(classname, predecessor=predecessor)
         else:
-            self.class_form = f"\n\n{classname} = {predecessor}\n"
+            self.class_form = f"\n\n{classname} = {predecessor}\n"  # type: ignore
 
 
 class SchemaBoolean(AbstractSchemaObject):
@@ -175,7 +175,7 @@ class SchemaArray(AbstractSchemaObject):
 
 def schema_object_fabric_method(classname, prepared_dict):
     json_type = prepared_dict[classname]
-    if json_type.get("type") == "object":
+    if json_type.get("type") == "object" or json_type.get("properties"):
         if json_type.get("allOf"):
             return SchemaAllOfObject(classname, prepared_dict)
         elif json_type.get("properties"):
