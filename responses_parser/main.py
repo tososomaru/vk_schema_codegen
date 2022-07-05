@@ -3,7 +3,7 @@ from io import StringIO
 import autoflake
 import black
 import isort
-from utils.titles import Imports, UpdateForwardRefs, ExportAll
+from utils.titles import Imports, ExportAll
 from utils.tools import get_response_imports
 
 from .models import jsonschema_object_factory, write_response_alias
@@ -46,7 +46,6 @@ def parse_file(
             for item in schema_object:
                 export_objects.append(item.classname)  # type: ignore
                 text += str(item)
-        text += str(UpdateForwardRefs(**schema_body, subclass="BaseResponse"))
         text += str(
             ExportAll(
                 *sorted(

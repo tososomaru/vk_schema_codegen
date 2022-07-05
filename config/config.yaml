@@ -7,8 +7,6 @@ schema_responses_path:
 object_models_imports:
   enum:
     null
-  inspect:
-    null
   typing:
     null
   vkbottle_types.base_model:
@@ -21,8 +19,6 @@ object_methods_imports:
   vkbottle_types.methods.base_category:
     - BaseCategory
 object_responses_imports:
-  inspect:
-    null
   typing:
     null
   vkbottle_types.responses.base_response:
