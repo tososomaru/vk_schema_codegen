@@ -93,3 +93,6 @@ venv
 .venv/
 results/
 vk_schema/
+
+### IntelliJ IDEA ###
+.idea
