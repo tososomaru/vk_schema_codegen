@@ -52,6 +52,7 @@ def create_objects_from_enum_types(definitions: dict):
         for item_name, item_value in properties.items():
             item_type = item_value.get("type")
             item_enum = item_value.get("enum")
+            item_required = item_value.get("required") is True
             item_description = item_value.get("description")
             enum_name = f"{key}_{item_name}"
             if not (item_type and item_enum):
@@ -64,7 +65,10 @@ def create_objects_from_enum_types(definitions: dict):
                 if len(name_from_description.split()) <= 4:
                     enum_name = "_".join(name_from_description.split())
             sorted_dict[enum_name] = item_value
-            properties[item_name] = {"$ref": f"objects.json#/definitions/{enum_name}"}
+            properties[item_name] = {
+                "$ref": f"objects.json#/definitions/{enum_name}",
+                'required': item_required
+            }
             if item_description:
                 properties[item_name]["description"] = item_description
         sorted_dict[key] = value
