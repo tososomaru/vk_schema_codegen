@@ -46,6 +46,12 @@ def create_objects_from_enum_types(definitions: dict):
     sorted_dict = {}
     for key, value in definitions.items():
         properties = value.get("properties")
+        all_of = value.get('allOf')
+        if all_of:
+            for elements in all_of:
+                if 'properties' in elements.keys():
+                    properties = elements.get('properties')
+                    break
         if not properties:
             sorted_dict[key] = value
             continue
